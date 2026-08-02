@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch &mdash; StreamVibe</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-mark">S</span>
+    <span class="logo-text">tream<b>Vibe</b></span>
+  </div>
+  <nav class="main-nav">
+    <a href="/?p=home">Home</a>
+    <a href="/?p=videos">Videos</a>
+    <a href="/?p=categories">Categories</a>
+    <a href="/?p=upload">Upload</a>
+  </nav>
+  <div class="search">
+    <input id="search-input" type="text" placeholder="Search videos...">
+    <button id="search-btn">Search</button>
+  </div>
+</header>
+
+<div class="layout watch-layout">
+  <main class="content">
+    <div class="player-wrap">
+      <video id="player" controls preload="metadata"></video>
+    </div>
+    <div class="video-meta">
+      <h1 id="video-title" class="video-title">Loading...</h1>
+      <div class="meta-row">
+        <span class="views" id="video-size">0 MB</span>
+        <span class="ext-badge" id="video-ext">mp4</span>
+      </div>
+    </div>
+  </main>
+  <aside class="sidebar">
+    <h3>Related Videos</h3>
+    <ul class="related-list" id="related-list"></ul>
+  </aside>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

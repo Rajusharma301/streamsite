@@ -174,3 +174,8 @@
 *.lz
 *.lzma
 *.iso
+
+# Streaming site media
+/videos/*
+!/videos/.gitkeep
+/static/thumbs/

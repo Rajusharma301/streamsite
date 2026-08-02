@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamVibe</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-mark">S</span>
+    <span class="logo-text">tream<b>Vibe</b></span>
+  </div>
+  <nav class="main-nav">
+    <a href="/?p=home" class="active">Home</a>
+    <a href="/?p=videos">Videos</a>
+    <a href="/?p=categories">Categories</a>
+    <a href="/?p=upload">Upload</a>
+  </nav>
+  <div class="search">
+    <input id="search-input" type="text" placeholder="Search videos...">
+    <button id="search-btn">Search</button>
+  </div>
+  <div class="user-actions">
+    <span class="login-btn">Log in</span>
+    <span class="signup-btn">Sign up</span>
+  </div>
+</header>
+
+<div class="category-bar" id="category-bar"></div>
+
+<div class="layout">
+  <main class="content">
+    <h2 class="section-title" id="section-title">Trending</h2>
+    <div class="video-grid" id="video-grid"></div>
+    <div class="empty" id="empty" style="display:none">
+      <p>No videos yet.</p>
+      <p>Put your video files into the <code>videos/</code> folder and refresh.</p>
+    </div>
+  </main>
+  <aside class="sidebar">
+    <h3>Categories</h3>
+    <ul id="sidebar-cats"></ul>
+  </aside>
+</div>
+
+<footer class="footer">
+  <p>StreamVibe &copy; 2026 &mdash; Personal streaming site</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
