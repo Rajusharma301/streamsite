@@ -34,7 +34,9 @@ def scan_videos(directory=VIDEO_DIR):
                         "url": "/video/" + rel,
                         "thumb": "/thumb/" + rel,
                         "size": human_size(size),
+                        "bytes": size,
                         "ext": ext.lstrip("."),
+                        "mtime": int(os.path.getmtime(full)),
                     }
                 )
     items.sort(key=lambda v: v["title"].lower())

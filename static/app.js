@@ -7,7 +7,26 @@ const state = {
   videos: [],
   query: "",
   category: "",
+  sort: "newest",
+  layout: "grid",
 };
+
+function applyTheme() {
+  const saved = localStorage.getItem("sv-theme");
+  const theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  document.documentElement.dataset.theme = theme;
+  const btn = document.getElementById("theme-toggle");
+  if (btn) btn.textContent = theme === "dark" ? "\u263E" : "\u263D";
+}
+
+function applyLayout() {
+  const layout = localStorage.getItem("sv-layout") || "grid";
+  state.layout = layout;
+  const grid = document.getElementById("video-grid");
+  if (grid) grid.classList.toggle("list-layout", layout === "list");
+  const btn = document.getElementById("layout-toggle");
+  if (btn) btn.textContent = layout === "grid" ? "\u2261" : "\u25A6";
+}
 
 function guessCategory(title) {
   const t = title.toLowerCase();
@@ -68,11 +87,23 @@ function filtered() {
     const q = state.query.toLowerCase();
     list = list.filter((v) => v.title.toLowerCase().includes(q));
   }
+  switch (state.sort) {
+    case "name":
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+      break;
+    case "size-desc":
+      list = [...list].sort((a, b) => (b.bytes || 0) - (a.bytes || 0));
+      break;
+    case "size-asc":
+      list = [...list].sort((a, b) => (a.bytes || 0) - (b.bytes || 0));
+      break;
+    default:
+      list = [...list].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+  }
   return list;
 }
 
 function cardHTML(v, index) {
-  const cat = guessCategory(v.title);
   return `
   <div class="video-card" data-i="${index}">
     <div class="thumb">
@@ -103,19 +134,21 @@ function render() {
       : "Trending Videos";
 
   if (title) title.textContent = label;
-  grid.innerHTML = list.map((v, i) => cardHTML(v, i)).join("");
+  const countEl = document.getElementById("result-count");
+  if (countEl) countEl.textContent = `${list.length} video${list.length === 1 ? "" : "s"}`;
+
+  grid.innerHTML = list.map((v) => cardHTML(v, v.url)).join("");
   empty.style.display = list.length ? "none" : "block";
 
   grid.querySelectorAll(".video-card").forEach((el) => {
     el.addEventListener("click", () => {
-      const v = state.videos[Number(el.dataset.i)];
-      const idx = list.indexOf(v);
+      const u = el.dataset.i;
+      const idx = list.findIndex((x) => x.url === u);
       const listParam = encodeURIComponent(
         list.slice(idx + 1).slice(0, 12).map((x) => x.title).join("\u0001")
       );
-      const u = encodeURIComponent(v.url);
-      const t = encodeURIComponent(v.title);
-      window.location.href = `/watch.html?v=${u}&t=${t}&list=${listParam}`;
+      const t = encodeURIComponent(list[idx].title);
+      window.location.href = `/watch.html?v=${encodeURIComponent(u)}&t=${t}&list=${listParam}`;
     });
   });
 
@@ -225,9 +258,43 @@ function renderUploadPage() {
     </div>`;
 }
 
+function setupControls() {
+  const sortSel = document.getElementById("sort-select");
+  if (sortSel) {
+    sortSel.value = state.sort;
+    sortSel.addEventListener("change", () => {
+      state.sort = sortSel.value;
+      render();
+    });
+  }
+
+  const themeBtn = document.getElementById("theme-toggle");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("sv-theme", next);
+      applyTheme();
+    });
+  }
+
+  const layoutBtn = document.getElementById("layout-toggle");
+  if (layoutBtn) {
+    layoutBtn.addEventListener("click", () => {
+      const next = state.layout === "grid" ? "list" : "grid";
+      localStorage.setItem("sv-layout", next);
+      state.layout = next;
+      applyLayout();
+    });
+  }
+}
+
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const page = params.get("p");
+
+  applyTheme();
+  applyLayout();
+  setupControls();
 
   await loadVideos();
 

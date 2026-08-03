@@ -24,6 +24,8 @@
     <button id="search-btn">Search</button>
   </div>
   <div class="user-actions">
+    <button id="layout-toggle" class="icon-btn" title="Toggle layout">&#9776;</button>
+    <button id="theme-toggle" class="icon-btn" title="Toggle theme">&#9790;</button>
     <span class="login-btn">Log in</span>
     <span class="signup-btn">Sign up</span>
   </div>
@@ -31,11 +33,20 @@
 
 <div class="category-bar" id="category-bar"></div>
 
+<div class="toolbar">
+  <select id="sort-select">
+    <option value="newest">Sort: Newest</option>
+    <option value="name">Sort: Name (A-Z)</option>
+    <option value="size-desc">Sort: Size (Large)</option>
+    <option value="size-asc">Sort: Size (Small)</option>
+  </select>
+  <span class="result-count" id="result-count"></span>
+</div>
+
 <div class="layout">
   <main class="content">
     <h2 class="section-title" id="section-title">Trending</h2>
-    <div class="video-grid" id="video-grid"></div>
-    <div class="empty" id="empty" style="display:none">
+    <div class="video-grid" id="video-grid"></div>    <div class="empty" id="empty" style="display:none">
       <p>No videos yet.</p>
       <p>Put your video files into the <code>videos/</code> folder and refresh.</p>
     </div>
