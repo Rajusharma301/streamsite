@@ -68,9 +68,21 @@ cp /sdcard/DCIM/your_video.mp4 ~/streamsite/videos/
 ## Uploading via web (admin)
 
 1. Click **Sign up** and register — the first account is the admin.
-2. Click **Upload** in the header.
-3. Enter a title (optional) and pick a video file, then click **Upload video**.
-4. The video appears on the home page automatically.
+2. Click **Admin** in the header.
+3. **Upload file** tab — pick a video file, optionally set a title, upload.
+4. **Add embed** tab — paste an `<iframe>` embed code (YouTube, Vimeo, etc.) or a direct URL to show an external video.
+5. **Manage videos** tab — edit any video title or delete videos.
+6. The video appears on the home page automatically.
+
+## Admin panel
+
+The Admin panel has three tabs:
+
+- **Upload file** — upload a video/audio file from your device (with progress bar).
+- **Add embed** — add an external video via iframe embed code or URL. It plays inside an iframe on the watch page.
+- **Manage videos** — rename titles or delete videos. Works for both uploaded files and embeds.
+
+Embedded videos are stored in `data/embeds.json` and appear in the video grid with an "embed" badge.
 
 ## Project layout
 

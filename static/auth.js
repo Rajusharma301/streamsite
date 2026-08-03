@@ -78,7 +78,7 @@ const AUTH = {
         const up = document.createElement("a");
         up.className = "nav-link-btn";
         up.href = "/?p=upload";
-        up.textContent = "Upload";
+        up.textContent = "Admin";
         el.appendChild(up);
       }
 
@@ -166,7 +166,7 @@ function setupAuthModal() {
       AUTH.renderHeader();
       const params = new URLSearchParams(window.location.search);
       if (params.get("p") === "upload") {
-        initUploadPage();
+        initAdminPanel();
       }
     } catch (error) {
       err.textContent = error.message;

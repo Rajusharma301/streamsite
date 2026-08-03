@@ -7,13 +7,14 @@ import secrets
 import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VIDEO_DIR = os.path.join(BASE_DIR, "videos")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
+EMBEDS_FILE = os.path.join(DATA_DIR, "embeds.json")
 VIDEO_EXTS = {".mp4", ".webm", ".mkv", ".avi", ".mov", ".m4v", ".flv", ".ts", ".mp3", ".ogg", ".wav", ".m3u8"}
 
 PORT = int(os.environ.get("PORT", 8000))
@@ -70,6 +71,50 @@ def auth_token(handler):
     return None
 
 
+# ---------------- embeds ----------------
+
+def load_embeds():
+    if not os.path.exists(EMBEDS_FILE):
+        return {"embeds": []}
+    try:
+        with open(EMBEDS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"embeds": []}
+
+
+def save_embeds(data):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(EMBEDS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def clean_title(title):
+    t = re.sub(r"[\r\n\t]+", " ", title or "").strip()
+    return t[:120]
+
+
+def sanitize_filename(name):
+    name = os.path.basename(name or "").strip()
+    name = re.sub(r"[\\/:*?\"<>|\x00-\x1f]", "_", name)
+    return name[:180]
+
+
+def normalize_embed(raw):
+    raw = (raw or "").strip()
+    if not raw:
+        return None, None
+    m = re.search(r"<iframe[^>]*>", raw, re.IGNORECASE)
+    if m:
+        tag = m.group(0)
+        sm = re.search(r'src=["\']([^"\']+)["\']', tag, re.IGNORECASE)
+        src = sm.group(1) if sm else ""
+        return tag + "</iframe>", src
+    if raw.startswith(("http://", "https://")):
+        return f'<iframe src="{raw}" allowfullscreen></iframe>', raw
+    return None, None
+
+
 # ---------------- http helpers ----------------
 
 def human_size(num):
@@ -91,6 +136,7 @@ def scan_videos(directory=VIDEO_DIR):
                 size = os.path.getsize(full)
                 items.append(
                     {
+                        "kind": "file",
                         "title": os.path.splitext(name)[0],
                         "url": "/video/" + rel,
                         "thumb": "/thumb/" + rel,
@@ -100,6 +146,26 @@ def scan_videos(directory=VIDEO_DIR):
                         "mtime": int(os.path.getmtime(full)),
                     }
                 )
+    items.sort(key=lambda v: v["title"].lower())
+    return items
+
+
+def scan_all():
+    items = scan_videos()
+    for e in load_embeds()["embeds"]:
+        items.append(
+            {
+                "kind": "embed",
+                "id": e["id"],
+                "title": e["title"],
+                "url": f"/watch.html?e={e['id']}",
+                "thumb": None,
+                "size": "External",
+                "bytes": 0,
+                "ext": "embed",
+                "mtime": int(e.get("created", 0)),
+            }
+        )
     items.sort(key=lambda v: v["title"].lower())
     return items
 
@@ -119,10 +185,13 @@ def build_thumbnail(source, thumb):
         return False
 
 
-def sanitize_filename(name):
-    name = os.path.basename(name or "").strip()
-    name = re.sub(r"[\\/:*?\"<>|\x00-\x1f]", "_", name)
-    return name[:180]
+def remove_thumb_for(rel):
+    thumb = os.path.join(STATIC_DIR, "thumbs", rel) + ".jpg"
+    if os.path.exists(thumb):
+        try:
+            os.remove(thumb)
+        except Exception:
+            pass
 
 
 # ---------------- streaming multipart parser ----------------
@@ -160,7 +229,6 @@ class MultipartReader:
         while True:
             if not self.started:
                 self.started = True
-                # consume preamble until first delimiter line
                 line = self._read_line()
                 while line and line != self.delim and line != self.delim + b"--":
                     line = self._read_line()
@@ -243,6 +311,16 @@ class Handler(SimpleHTTPRequestHandler):
             return json.loads(raw.decode("utf-8"))
         except Exception:
             return None
+
+    def require_admin(self):
+        username = auth_token(self)
+        if not username:
+            self.send_json({"error": "Not logged in"}, 401)
+            return None
+        if not is_admin_user(username):
+            self.send_json({"error": "Admin only"}, 403)
+            return None
+        return username
 
     def send_thumb(self, rel):
         source = os.path.join(VIDEO_DIR, rel)
@@ -365,12 +443,7 @@ class Handler(SimpleHTTPRequestHandler):
     # ---------------- upload api ----------------
 
     def api_upload(self):
-        username = auth_token(self)
-        if not username:
-            self.send_json({"error": "Not logged in"}, 401)
-            return
-        if not is_admin_user(username):
-            self.send_json({"error": "Admin only"}, 403)
+        if not self.require_admin():
             return
 
         ct = self.headers.get("Content-Type", "")
@@ -440,6 +513,129 @@ class Handler(SimpleHTTPRequestHandler):
 
         self.send_json({"ok": True, "file": saved_name, "title": os.path.splitext(saved_name)[0]})
 
+    # ---------------- embed api ----------------
+
+    def api_embed_get(self):
+        qs = parse_qs(urlparse(self.path).query)
+        eid = (qs.get("id") or [None])[0]
+        for e in load_embeds()["embeds"]:
+            if e["id"] == eid:
+                self.send_json({"title": e["title"], "embed": e["embed"]})
+                return
+        self.send_json({"error": "Not found"}, 404)
+
+    def api_embed_add(self):
+        if not self.require_admin():
+            return
+        body = self.read_json_body()
+        if not body:
+            self.send_json({"error": "Invalid request"}, 400)
+            return
+        title = clean_title(body.get("title", ""))
+        embed, src = normalize_embed(body.get("embed", ""))
+        if not embed:
+            self.send_json({"error": "Paste an iframe embed code or a direct URL"}, 400)
+            return
+        if not title:
+            title = "Embedded video"
+        eid = secrets.token_hex(4)
+        with _lock:
+            data = load_embeds()
+            data["embeds"].insert(0, {"id": eid, "title": title, "embed": embed, "src": src, "created": int(time.time())})
+            save_embeds(data)
+        self.send_json({"ok": True, "id": eid})
+
+    # ---------------- edit / delete api ----------------
+
+    def api_edit(self):
+        if not self.require_admin():
+            return
+        body = self.read_json_body()
+        if not body:
+            self.send_json({"error": "Invalid request"}, 400)
+            return
+        title = clean_title(body.get("title", ""))
+        if not title:
+            self.send_json({"error": "Title required"}, 400)
+            return
+
+        url = body.get("url")
+        eid = body.get("id")
+
+        if url and url.startswith("/video/"):
+            rel = url[len("/video/"):]
+            full = os.path.join(VIDEO_DIR, rel)
+            if not os.path.isfile(full):
+                self.send_json({"error": "Not found"}, 404)
+                return
+            ext = os.path.splitext(rel)[1]
+            base = sanitize_filename(title) or os.path.splitext(rel)[0]
+            new_name = base + ext
+            dest = os.path.join(VIDEO_DIR, new_name)
+            counter = 1
+            while os.path.exists(dest) and os.path.realpath(dest) != os.path.realpath(full):
+                dest = os.path.join(VIDEO_DIR, f"{base}_{counter}{ext}")
+                counter += 1
+            if os.path.realpath(dest) != os.path.realpath(full):
+                os.rename(full, dest)
+                remove_thumb_for(rel)
+            self.send_json({"ok": True, "file": os.path.basename(dest)})
+            return
+
+        if eid:
+            with _lock:
+                data = load_embeds()
+                for e in data["embeds"]:
+                    if e["id"] == eid:
+                        e["title"] = title
+                        save_embeds(data)
+                        self.send_json({"ok": True})
+                        return
+            self.send_json({"error": "Not found"}, 404)
+            return
+
+        self.send_json({"error": "Invalid request"}, 400)
+
+    def api_delete(self):
+        if not self.require_admin():
+            return
+        body = self.read_json_body()
+        if not body:
+            self.send_json({"error": "Invalid request"}, 400)
+            return
+
+        url = body.get("url")
+        eid = body.get("id")
+
+        if url and url.startswith("/video/"):
+            rel = url[len("/video/"):]
+            full = os.path.join(VIDEO_DIR, rel)
+            if not os.path.isfile(full):
+                self.send_json({"error": "Not found"}, 404)
+                return
+            try:
+                os.remove(full)
+            except Exception as exc:
+                self.send_json({"error": f"Delete failed: {exc}"}, 500)
+                return
+            remove_thumb_for(rel)
+            self.send_json({"ok": True})
+            return
+
+        if eid:
+            with _lock:
+                data = load_embeds()
+                newlist = [e for e in data["embeds"] if e["id"] != eid]
+                if len(newlist) == len(data["embeds"]):
+                    self.send_json({"error": "Not found"}, 404)
+                    return
+                data["embeds"] = newlist
+                save_embeds(data)
+                self.send_json({"ok": True})
+            return
+
+        self.send_json({"error": "Invalid request"}, 400)
+
     # ---------------- routing ----------------
 
     def do_GET(self):
@@ -452,6 +648,10 @@ class Handler(SimpleHTTPRequestHandler):
 
         if path == "/api/me":
             self.api_me()
+            return
+
+        if path == "/api/embed":
+            self.api_embed_get()
             return
 
         if path.startswith("/video/"):
@@ -469,7 +669,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if path == "/api/videos":
-            data = json.dumps(scan_videos()).encode()
+            data = json.dumps(scan_all()).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(data)))
@@ -499,6 +699,12 @@ class Handler(SimpleHTTPRequestHandler):
             self.api_logout()
         elif path == "/api/upload":
             self.api_upload()
+        elif path == "/api/embed":
+            self.api_embed_add()
+        elif path == "/api/edit":
+            self.api_edit()
+        elif path == "/api/delete":
+            self.api_delete()
         else:
             self.send_json({"error": "Not found"}, 404)
 
