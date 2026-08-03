@@ -442,6 +442,23 @@ body {
 }
 .progress-text { font-size: 12px; color: var(--muted); min-width: 40px; }
 
+.nav-sep { color: var(--muted); padding: 0 2px; user-select: none; }
+
+/* ---------- Admin page wrapper ---------- */
+.admin-wrap {
+  max-width: 860px;
+  margin: 24px auto;
+  padding: 0 20px;
+}
+.admin-heading {
+  font-size: 22px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+}
+.empty-link { color: var(--accent); }
+
 /* ---------- Admin panel ---------- */
 .admin-panel {
   background: var(--bg2);

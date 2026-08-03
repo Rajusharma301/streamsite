@@ -77,7 +77,7 @@ const AUTH = {
       if (this.user.is_admin) {
         const up = document.createElement("a");
         up.className = "nav-link-btn";
-        up.href = "/?p=upload";
+        up.href = "/admin.html";
         up.textContent = "Admin";
         el.appendChild(up);
       }
@@ -88,13 +88,10 @@ const AUTH = {
       out.addEventListener("click", async () => {
         await this.logout();
         this.renderHeader();
-        if (window.location.pathname.endsWith("watch.html")) return;
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("p") === "upload") {
-          window.location.href = "/";
-          return;
+        document.dispatchEvent(new CustomEvent("sv-login"));
+        if (!window.location.pathname.endsWith("watch.html") && !window.location.pathname.endsWith("admin.html")) {
+          window.location.reload();
         }
-        window.location.reload();
       });
       el.appendChild(out);
     } else {
@@ -164,10 +161,7 @@ function setupAuthModal() {
       }
       closeAuth();
       AUTH.renderHeader();
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("p") === "upload") {
-        initAdminPanel();
-      }
+      document.dispatchEvent(new CustomEvent("sv-login"));
     } catch (error) {
       err.textContent = error.message;
     } finally {
