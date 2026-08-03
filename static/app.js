@@ -325,7 +325,7 @@ async function init() {
   const page = params.get("p");
 
   if (page === "upload") {
-    window.location.href = "/admin.html";
+    window.location.href = "/admin";
     return;
   }
 

@@ -12,11 +12,25 @@ function adminTheme() {
   if (btn) btn.textContent = theme === "dark" ? "\u263E" : "\u263D";
 }
 
+function renderAcUser() {
+  const el = document.getElementById("ac-user");
+  if (!el) return;
+  if (AUTH.user) {
+    el.innerHTML = `<span class="ac-user-badge">${escapeHtml(AUTH.user.username)}${AUTH.user.is_admin ? " &middot; admin" : ""}</span>`;
+  } else {
+    el.innerHTML = `<button class="ac-login-link" id="ac-login">Log in / Sign up</button>`;
+    const btn = document.getElementById("ac-login");
+    if (btn) btn.addEventListener("click", () => openAuth("login"));
+  }
+}
+
 function initAdminPanel() {
   const content = document.getElementById("admin-content");
   if (!content) return;
+  renderAcUser();
 
   if (!AUTH.user) {
+    document.getElementById("ac-title").textContent = "Admin Console";
     content.innerHTML = `
       <div class="upload-box">
         <h2>Please log in</h2>
@@ -29,6 +43,7 @@ function initAdminPanel() {
   }
 
   if (!AUTH.isAdmin()) {
+    document.getElementById("ac-title").textContent = "Admin Console";
     content.innerHTML = `
       <div class="upload-box">
         <h2>Admin only</h2>
@@ -37,6 +52,8 @@ function initAdminPanel() {
       </div>`;
     return;
   }
+
+  document.getElementById("ac-title").textContent = "Admin Console";
 
   content.innerHTML = `
     <section id="panel-upload" class="admin-section">
@@ -81,9 +98,9 @@ function initAdminPanel() {
 }
 
 function setupAdminTabs() {
-  document.querySelectorAll(".admin-tab").forEach((btn) => {
+  document.querySelectorAll(".ac-link").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".admin-tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".ac-link").forEach((b) => b.classList.remove("active"));
       document.querySelectorAll(".admin-section").forEach((s) => (s.style.display = "none"));
       btn.classList.add("active");
       const panel = document.getElementById("panel-" + btn.dataset.tab);

@@ -444,7 +444,136 @@ body {
 
 .nav-sep { color: var(--muted); padding: 0 2px; user-select: none; }
 
-/* ---------- Admin page wrapper ---------- */
+/* ---------- Admin Console (standalone page) ---------- */
+.ac-wrap {
+  display: flex;
+  min-height: 100vh;
+}
+.ac-sidebar {
+  width: 220px;
+  flex: 0 0 220px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.ac-brand {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ac-brand span {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.ac-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.ac-link {
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ac-link:hover { color: var(--text); background: var(--bg3); }
+.ac-link.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  border-color: var(--accent);
+}
+.ac-side-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ac-site-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13px;
+}
+.ac-site-link:hover { text-decoration: underline; }
+.ac-user-badge {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ac-login-link {
+  background: var(--accent);
+  border: none;
+  color: #000;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ac-main {
+  flex: 1;
+  padding: 24px 28px;
+  min-width: 0;
+}
+.ac-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ac-head h1 {
+  font-size: 22px;
+  margin: 0;
+}
+.ac-content {
+  max-width: 900px;
+}
+
+@media (max-width: 700px) {
+  .ac-wrap { flex-direction: column; }
+  .ac-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .ac-brand { margin: 0; padding: 0; border: none; }
+  .ac-nav { flex-direction: row; flex: 1; }
+  .ac-side-footer { border: none; padding: 0; flex-direction: row; }
+  .ac-main { padding: 16px; }
+}
+
+/* ---------- Admin page wrapper (legacy) ---------- */
 .admin-wrap {
   max-width: 860px;
   margin: 24px auto;

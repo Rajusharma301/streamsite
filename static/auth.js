@@ -77,7 +77,7 @@ const AUTH = {
       if (this.user.is_admin) {
         const up = document.createElement("a");
         up.className = "nav-link-btn";
-        up.href = "/admin.html";
+        up.href = "/admin";
         up.textContent = "Admin";
         el.appendChild(up);
       }
@@ -89,7 +89,7 @@ const AUTH = {
         await this.logout();
         this.renderHeader();
         document.dispatchEvent(new CustomEvent("sv-login"));
-        if (!window.location.pathname.endsWith("watch.html") && !window.location.pathname.endsWith("admin.html")) {
+        if (!window.location.pathname.endsWith("watch.html") && !window.location.pathname.endsWith("/admin")) {
           window.location.reload();
         }
       });

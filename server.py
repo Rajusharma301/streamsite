@@ -646,6 +646,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_file(os.path.join(STATIC_DIR, "index.html"))
             return
 
+        if path == "/admin":
+            self.send_file(os.path.join(STATIC_DIR, "admin.html"))
+            return
+
         if path == "/api/me":
             self.api_me()
             return

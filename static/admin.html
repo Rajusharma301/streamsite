@@ -3,38 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel &mdash; StreamVibe</title>
+<title>Admin Console &mdash; StreamVibe</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
-<header class="topbar">
-  <div class="logo">
-    <span class="logo-mark">S</span>
-    <span class="logo-text">tream<b>Vibe</b></span>
-  </div>
-  <nav class="main-nav">
-    <a href="/">Home</a>
-    <span class="nav-sep">/</span>
-    <a href="/admin.html" class="active">Admin Panel</a>
-  </nav>
-  <div class="user-actions" id="user-actions">
-    <button id="theme-toggle" class="icon-btn" title="Toggle theme">&#9790;</button>
-  </div>
-</header>
+<div class="ac-wrap">
+  <aside class="ac-sidebar">
+    <div class="ac-brand">StreamVibe <span>Admin</span></div>
+    <nav class="ac-nav">
+      <button class="ac-link active" data-tab="upload">Upload file</button>
+      <button class="ac-link" data-tab="embed">Add embed</button>
+      <button class="ac-link" data-tab="manage">Manage videos</button>
+    </nav>
+    <div class="ac-side-footer">
+      <a class="ac-site-link" href="/">Go to site</a>
+      <div id="ac-user"></div>
+    </div>
+  </aside>
 
-<div class="admin-wrap">
-  <h1 class="admin-heading">Admin Panel</h1>
-  <div class="admin-panel">
-    <div class="admin-tabs">
-      <button class="admin-tab active" data-tab="upload">Upload file</button>
-      <button class="admin-tab" data-tab="embed">Add embed</button>
-      <button class="admin-tab" data-tab="manage">Manage videos</button>
+  <main class="ac-main">
+    <div class="ac-head">
+      <h1 id="ac-title">Admin Console</h1>
+      <div class="user-actions" id="user-actions">
+        <button id="theme-toggle" class="icon-btn" title="Toggle theme">&#9790;</button>
+      </div>
     </div>
-    <div class="admin-body">
-      <div id="admin-content"></div>
-    </div>
-  </div>
+    <div id="admin-content" class="ac-content"></div>
+  </main>
 </div>
 
 <div class="modal-backdrop" id="auth-modal" style="display:none">
