@@ -119,10 +119,8 @@ class Handler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
-        if path == "/" or path == "/index.html":
-            self.send_response(302)
-            self.send_header("Location", "/?p=home")
-            self.end_headers()
+        if path == "/":
+            self.send_file(os.path.join(STATIC_DIR, "index.html"))
             return
 
         if path.startswith("/video/"):
