@@ -179,3 +179,4 @@
 /videos/*
 !/videos/.gitkeep
 /static/thumbs/
+/data/

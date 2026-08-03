@@ -244,18 +244,110 @@ function handleSearch() {
   }
 }
 
-function renderUploadPage() {
+function initUploadPage() {
   const title = document.getElementById("section-title");
   if (!title) return;
   title.textContent = "Upload";
   const grid = document.getElementById("video-grid");
+  const empty = document.getElementById("empty");
+  if (empty) empty.style.display = "none";
+  const countEl = document.getElementById("result-count");
+  if (countEl) countEl.textContent = "";
+
+  if (!AUTH.user) {
+    grid.innerHTML = `
+      <div class="upload-box" style="grid-column:1/-1">
+        <h2>Please log in</h2>
+        <p>Only the admin can upload videos.</p>
+        <button class="auth-submit" style="margin:16px auto 0" id="goto-login">Log in</button>
+      </div>`;
+    const btn = document.getElementById("goto-login");
+    if (btn) btn.addEventListener("click", () => openAuth("login"));
+    return;
+  }
+
+  if (!AUTH.isAdmin()) {
+    grid.innerHTML = `
+      <div class="upload-box" style="grid-column:1/-1">
+        <h2>Admin only</h2>
+        <p>Your account (${escapeHtml(AUTH.user.username)}) does not have admin permissions.</p>
+        <p>Only the first registered account is the admin.</p>
+      </div>`;
+    return;
+  }
+
   grid.innerHTML = `
     <div class="upload-box" style="grid-column:1/-1">
-      <h2>How to add videos</h2>
-      <p>Put your video files directly into the <code>videos/</code> folder on your phone.</p>
-      <p>Supported: mp4, webm, mkv, avi, mov, m4v, flv, ts, mp3, ogg, wav</p>
-      <p>Then refresh this page &mdash; they appear automatically.</p>
+      <h2>Upload a video</h2>
+      <form id="upload-form">
+        <label>Title (optional)</label>
+        <input type="text" id="upload-title" placeholder="My video title" maxlength="180">
+        <label>Video file</label>
+        <input type="file" id="upload-file" accept=".mp4,.webm,.mkv,.avi,.mov,.m4v,.flv,.ts,.mp3,.ogg,.wav" required>
+        <p class="form-error" id="upload-error"></p>
+        <div class="progress-wrap" id="progress-wrap" style="display:none">
+          <div class="progress-bar" id="progress-bar"></div>
+          <span class="progress-text" id="progress-text">0%</span>
+        </div>
+        <button type="submit" class="auth-submit" id="upload-submit">Upload video</button>
+      </form>
     </div>`;
+
+  const form = document.getElementById("upload-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById("upload-file");
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const err = document.getElementById("upload-error");
+    const submit = document.getElementById("upload-submit");
+    const wrap = document.getElementById("progress-wrap");
+    const bar = document.getElementById("progress-bar");
+    const text = document.getElementById("progress-text");
+    err.textContent = "";
+    submit.disabled = true;
+    wrap.style.display = "block";
+
+    const fd = new FormData();
+    const t = document.getElementById("upload-title").value.trim();
+    if (t) fd.append("title", t);
+    fd.append("file", file, file.name);
+
+    try {
+      const res = await uploadWithProgress(fd, (p) => {
+        bar.style.width = p + "%";
+        text.textContent = p + "%";
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Upload failed");
+      }
+      text.textContent = "Done!";
+      submit.disabled = false;
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 800);
+    } catch (error) {
+      err.textContent = error.message;
+      submit.disabled = false;
+      wrap.style.display = "none";
+    }
+  });
+}
+
+function uploadWithProgress(fd, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload");
+    xhr.setRequestHeader("Authorization", "Bearer " + AUTH.token);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => resolve({ ok: xhr.status < 400, json: () => JSON.parse(xhr.responseText || "{}") });
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.send(fd);
+  });
 }
 
 function setupControls() {
@@ -300,7 +392,11 @@ async function init() {
 
   if (page === "upload") {
     renderCategories();
-    renderUploadPage();
+    if (AUTH.user) {
+      initUploadPage();
+    } else {
+      document.addEventListener("sv-auth", () => initUploadPage(), { once: true });
+    }
   } else if (window.location.pathname.endsWith("watch.html")) {
     setupWatchPage();
   } else {

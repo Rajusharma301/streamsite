@@ -54,18 +54,37 @@ cp /sdcard/DCIM/your_video.mp4 ~/streamsite/videos/
 - Search bar and category filter
 - Watch page with related-videos sidebar
 - Mobile responsive grid layout
+- Dark/light theme toggle, grid/list layout toggle, sort options
+- **Signup / Login / Logout** with password hashing
+- **Admin upload** — the first registered account becomes admin and can upload videos through the browser
+
+## Accounts
+
+- First user to register becomes the **admin**.
+- Admin can upload videos from the Upload page.
+- Passwords are hashed (PBKDF2) and stored in `data/users.json` (never committed).
+- Sessions last 7 days.
+
+## Uploading via web (admin)
+
+1. Click **Sign up** and register — the first account is the admin.
+2. Click **Upload** in the header.
+3. Enter a title (optional) and pick a video file, then click **Upload video**.
+4. The video appears on the home page automatically.
 
 ## Project layout
 
 ```
 streamsite/
 ├── server.py        # Python web server (no pip install needed)
-├── videos/          # Drop your videos here
+├── videos/          # Drop your videos here (or upload via web)
+├── data/users.json  # User accounts (created automatically)
 └── static/          # Frontend (HTML/CSS/JS)
     ├── index.html
     ├── watch.html
     ├── styles.css
-    └── app.js
+    ├── app.js
+    └── auth.js
 ```
 
 ## Notes
@@ -73,4 +92,5 @@ streamsite/
 - The server listens on `0.0.0.0:8000` so it accepts connections from your LAN.
 - Change the port: `PORT=8080 python server.py`
 - Thumbnails are cached in `static/thumbs/` and regenerated when a video changes.
-- A test file `videos/raw_demo.mp4` (dummy bytes) may exist from local testing — you can delete it freely; it is not a real video.
+- For large files, the upload streams to disk (no full-buffer in memory).
+- If you are not the first user on an existing install, you will not be admin.

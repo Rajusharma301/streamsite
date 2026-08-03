@@ -23,7 +23,7 @@
     <input id="search-input" type="text" placeholder="Search videos...">
     <button id="search-btn">Search</button>
   </div>
-  <div class="user-actions">
+  <div class="user-actions" id="user-actions">
     <button id="theme-toggle" class="icon-btn" title="Toggle theme">&#9790;</button>
   </div>
 </header>
@@ -47,6 +47,25 @@
   </aside>
 </div>
 
+<div class="modal-backdrop" id="auth-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-tabs">
+      <button class="tab active" id="tab-login">Log in</button>
+      <button class="tab" id="tab-signup">Sign up</button>
+    </div>
+    <form id="auth-form" autocomplete="off">
+      <label>Username</label>
+      <input type="text" id="auth-username" required minlength="3" maxlength="24" autocomplete="username">
+      <label>Password</label>
+      <input type="password" id="auth-password" required minlength="4" autocomplete="current-password">
+      <p class="form-error" id="auth-error"></p>
+      <button type="submit" class="auth-submit" id="auth-submit">Log in</button>
+    </form>
+    <button class="modal-close" id="auth-close">&times;</button>
+  </div>
+</div>
+
+<script src="/auth.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
